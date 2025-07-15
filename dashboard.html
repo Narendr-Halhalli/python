@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard – MPS Tranquil</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="sidebar">
+    {% if picture %}
+      <img src="{{ picture }}" alt="Profile Picture">
+    {% else %}
+      <img src="https://placehold.co/80x80/1ed760/000?text=MPS" alt="Placeholder Profile Picture">
+    {% endif %}
+    <h3>{{ user or 'Guest' }}</h3>
+    <p>Apt {{ apartment or '—' }}</p>
+    {% if is_admin %}
+      <p style="color: #1ed760; font-weight: bold;">Admin User</p>
+    {% endif %}
+    <hr>
+    <a onclick="showTab('maintenance')">🔧 Maintenance</a>
+    <a onclick="showTab('reminders')">⏰ Reminders</a>
+      <a href="{{ url_for('view_tenants') }}">👥 Tenant Info</a>
+    <a href="{{ url_for('logout') }}">🚪 Logout</a>
+  </div>
+
+  <div class="main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-messages">
+          {% for category, message in messages %}
+            <li class="{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    {% if not is_admin %}
+        <div class="tab-content" style="display: block; background-color: #2a2a2a; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+            <p style="color: #ffc107; text-align: center;">
+                You are currently logged in as a regular user. To access "Tenant Info" and other admin features,
+                please log in with an administrator account (e.g., <strong>admin@tranquil.local</strong> with password <strong>Admin@123</strong>).
+            </p>
+        </div>
+    {% endif %}
+
+    <div id="maintenance" class="tab-content active"> <!-- Added 'active' class here -->
+      <h2>🔧 Maintenance Calculator</h2>
+      <form method="post">
+        <label for="electricity">Electricity Bill (₹)</label>
+        <input type="number" step="0.01" name="electricity" id="electricity" required>
+        <label for="water">Water Bill (₹)</label>
+        <input type="number" step="0.01" name="water" id="water" required>
+        <label for="watchman">Watchman Charges (₹)</label>
+        <input type="number" step="0.01" name="watchman" id="watchman" required>
+        <label for="flats">No. of Flats</label>
+        <input type="number" name="flats" id="flats" required>
+        <button type="submit">Calculate</button>
+      </form>
+      {% if result %}
+        <div class="result-display">
+            <p><strong>Total Maintenance:</strong> ₹{{ "%.2f"|format(result.total) }}</p>
+            <p><strong>Per Flat:</strong> ₹{{ "%.2f"|format(result.per_flat) }}</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <div id="reminders" class="tab-content">
+      <h2>📅 Reminders</h2>
+      <form method="post">
+        <label for="reminder-text">Add New Reminder</label>
+        <textarea name="reminder" id="reminder-text" placeholder="Enter reminder..." required></textarea>
+        <button type="submit">Add Reminder</button>
+      </form>
+      {% if reminders %}
+        <ul>
+          {% for r in reminders %}
+            <li>{{ r }}</li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>No reminders yet. Add one above!</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // Optional: Auto-open first tab on load
+    // This script will still run, but the initial 'active' class helps ensure visibility
+    window.onload = () => {
+        // Ensure the initial tab is active, even if it's already set in HTML
+        showTab('maintenance');
+    };
+  </script>
+</body>
+</html>
